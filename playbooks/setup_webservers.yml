@@ -1,0 +1,29 @@
+---
+# Setup Web Servers
+# Configure Nginx/Apache and deploy web application
+
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+    - webserver
+
+  post_tasks:
+    - name: Verify web server is running
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+      register: web_status
+
+    - name: Test web server connectivity
+      uri:
+        url: "http://localhost:{{ nginx_port }}"
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 3
+      delay: 5

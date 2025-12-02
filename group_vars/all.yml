@@ -1,0 +1,32 @@
+# Global group variables - All servers
+---
+# Common system settings
+system_packages:
+  - curl
+  - wget
+  - git
+  - htop
+  - vim
+  - net-tools
+  - ntp
+  - python3-pip
+
+# User settings
+app_user: appuser
+app_group: appuser
+
+# Firewall settings
+firewall_enabled: true
+firewall_policy: deny
+
+# NTP settings
+ntp_enabled: true
+ntp_timezone: UTC
+
+# SSH settings
+ssh_port: 22
+ssh_key_bits: 4096
+
+# Security settings
+security_update_enabled: true
+security_auto_reboot: false

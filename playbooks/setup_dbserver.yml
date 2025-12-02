@@ -1,0 +1,36 @@
+---
+# Setup Database Server
+# Configure MySQL/PostgreSQL database
+
+- name: Configure database server
+  hosts: dbservers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+    - database
+
+  post_tasks:
+    - name: Verify database is running
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+      register: db_status
+
+    - name: Create backup directory
+      file:
+        path: "{{ db_backup_dir }}"
+        state: directory
+        mode: '0755'
+        owner: mysql
+        group: mysql
+
+    - name: Set up daily backup cron job
+      cron:
+        name: "MySQL daily backup"
+        hour: "2"
+        minute: "0"
+        job: "mysqldump -u root --all-databases > {{ db_backup_dir }}/backup-$(date +\\%Y\\%m\\%d).sql"
+        user: root

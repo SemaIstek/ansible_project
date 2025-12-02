@@ -1,0 +1,72 @@
+---
+# Webserver role - Tasks
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: Create nginx config directory
+  file:
+    path: /etc/nginx/conf.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Nginx main configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    backup: yes
+  notify: Restart Nginx
+
+- name: Create web content directory
+  file:
+    path: "/var/www/html"
+    state: directory
+    mode: '0755'
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+
+- name: Create index.html
+  copy:
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to {{ inventory_hostname }}</title>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .info { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+          </style>
+      </head>
+      <body>
+          <h1>Welcome to {{ inventory_hostname }}</h1>
+          <div class="info">
+              <p><strong>Hostname:</strong> {{ inventory_hostname }}</p>
+              <p><strong>IP Address:</strong> {{ ansible_default_ipv4.address }}</p>
+              <p><strong>OS:</strong> {{ ansible_os_family }} {{ ansible_distribution_version }}</p>
+              <p><strong>Nginx Port:</strong> {{ nginx_port }}</p>
+          </div>
+      </body>
+      </html>
+    dest: /var/www/html/index.html
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+
+- name: Enable Nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Allow HTTP through firewall
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+
+- name: Allow HTTPS through firewall
+  ufw:
+    rule: allow
+    port: '443'
+    proto: tcp

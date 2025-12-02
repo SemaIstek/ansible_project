@@ -1,0 +1,46 @@
+# .gitignore for Ansible project
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Ansible temporary files
+*.retry
+.ansible/plugins/module_utils/
+
+# Sensitive files
+inventory/group_vars/all/vault.yml
+*.pem
+*.key
+*.crt
+!.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Ansible facts cache
+/tmp/ansible_facts
+
+# Logs
+*.log
+/var/log/
+
+# Local overrides
+local_*.yml

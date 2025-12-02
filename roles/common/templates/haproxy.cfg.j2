@@ -1,0 +1,70 @@
+# haproxy.cfg.j2 - HAProxy configuration template
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+    # Default SSL material locations
+    ca-base /etc/ssl/certs
+    crt-base /etc/ssl/private
+
+    # SSL/TLS defaults
+    ssl-default-bind-ciphers ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS
+    ssl-default-bind-options ssl-min-ver TLSv1.2
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    timeout tunnel  3600s
+    timeout http-keep-alive 3600s
+
+    # Error files
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+# Stats page
+listen stats
+    bind *:{{ lb_stats_port }}
+    stats enable
+    stats uri {{ lb_stats_uri }}
+    stats realm HAProxy\ Statistics
+    stats auth {{ lb_stats_admin }}:{{ lb_stats_password }}
+    stats refresh 30s
+
+# Frontend
+frontend web_frontend
+    bind *:{{ lb_port }}
+    {% if lb_ssl_enabled %}
+    bind *:{{ lb_https_port }} ssl crt {{ lb_ssl_certificate }}
+    {% endif %}
+    mode http
+    option httpclose
+    option forwardfor
+
+    acl is_websocket hdr(Upgrade) -i websocket
+    use_backend web_backend
+
+# Backend
+backend web_backend
+    balance {{ lb_algorithm | default('roundrobin') }}
+    option httpchk GET / HTTP/1.1\r\nHost:\ localhost
+    option forwardfor
+    cookie SERVERID insert indirect nocache
+    {% for backend in lb_backend_servers %}
+    server {{ backend.name }} {{ backend.ip }}:{{ backend.port }} check inter 5s fall 2 rise 2 cookie {{ backend.name }}
+    {% endfor %}

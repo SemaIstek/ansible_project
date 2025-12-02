@@ -1,0 +1,6 @@
+# Host-specific variables for web1
+---
+server_name: "web-server-01"
+server_environment: production
+nginx_server_name: "example.com www.example.com"
+app_port: 8080

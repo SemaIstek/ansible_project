@@ -1,0 +1,42 @@
+---
+# Main Playbook - Configure all servers
+# This playbook applies common configuration to all servers
+
+- name: Configure all servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+  roles:
+    - common
+    - monitoring
+
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  roles:
+    - webserver
+
+- name: Configure database servers
+  hosts: dbservers
+  become: yes
+  roles:
+    - database
+
+- name: Configure load balancers
+  hosts: loadbalancers
+  become: yes
+  roles:
+    - monitoring
+
+  post_tasks:
+    - name: Display configuration summary
+      debug:
+        msg: "Configuration completed for all servers"

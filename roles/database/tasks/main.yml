@@ -1,0 +1,86 @@
+---
+# Database role - Tasks
+
+- name: Install MySQL server
+  apt:
+    name: mysql-server
+    state: present
+  when: db_type == "mysql"
+
+- name: Install PostgreSQL server
+  apt:
+    name: postgresql
+    state: present
+  when: db_type == "postgresql"
+
+- name: Start and enable MySQL
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+  when: db_type == "mysql"
+
+- name: Start and enable PostgreSQL
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
+  when: db_type == "postgresql"
+
+- name: Create backup directory
+  file:
+    path: "{{ db_backup_dir }}"
+    state: directory
+    mode: '0755'
+    owner: mysql
+    group: mysql
+
+- name: Allow MySQL through firewall
+  ufw:
+    rule: allow
+    port: '{{ db_port }}'
+    proto: tcp
+  when: db_type == "mysql"
+
+- name: Allow PostgreSQL through firewall
+  ufw:
+    rule: allow
+    port: '{{ db_port }}'
+    proto: tcp
+  when: db_type == "postgresql"
+
+- name: Install MySQL Python dependency
+  apt:
+    name: python3-pymysql
+    state: present
+  when: db_type == "mysql"
+
+- name: Secure MySQL installation
+  mysql_user:
+    name: root
+    host: localhost
+    password: "{{ db_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when: db_type == "mysql"
+
+- name: Create application database
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  when: db_type == "mysql"
+
+- name: Create application database user
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: '%'
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  when: db_type == "mysql"
+
+- name: Display database configuration summary
+  debug:
+    msg: "Database {{ db_type }} configured for {{ inventory_hostname }}"

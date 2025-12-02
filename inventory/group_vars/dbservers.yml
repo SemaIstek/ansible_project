@@ -1,0 +1,22 @@
+# Group variables for database servers
+---
+# Database Server Configuration
+db_type: mysql  # or postgresql
+db_port: 3306
+db_user: dbuser
+db_password: "{{ vault_db_password }}"  # Use vault for sensitive data
+db_root_password: "{{ vault_db_root_password }}"
+
+# Database settings
+db_name: production_db
+db_backup_dir: /var/backups/mysql
+db_backup_retention_days: 30
+
+# Performance tuning
+db_max_connections: 500
+db_innodb_buffer_pool_size: 1G
+db_query_cache_size: 64M
+
+# Replication (optional)
+db_replication_enabled: false
+db_server_id: 1

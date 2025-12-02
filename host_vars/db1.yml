@@ -1,0 +1,5 @@
+# Host-specific variables for db1
+---
+server_name: "database-server-01"
+server_environment: production
+db_server_id: 1

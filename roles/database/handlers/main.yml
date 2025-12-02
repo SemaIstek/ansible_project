@@ -1,0 +1,12 @@
+---
+# Database role - Handlers
+
+- name: Restart MySQL
+  systemd:
+    name: mysql
+    state: restarted
+
+- name: Restart PostgreSQL
+  systemd:
+    name: postgresql
+    state: restarted

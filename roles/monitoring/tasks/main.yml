@@ -1,0 +1,75 @@
+---
+# Monitoring role - Tasks
+
+- name: Install monitoring tools
+  apt:
+    name:
+      - prometheus-node-exporter
+      - collectd
+      - rsyslog
+    state: present
+
+- name: Start and enable node-exporter
+  systemd:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes
+
+- name: Start and enable collectd
+  systemd:
+    name: collectd
+    state: started
+    enabled: yes
+
+- name: Start and enable rsyslog
+  systemd:
+    name: rsyslog
+    state: started
+    enabled: yes
+
+- name: Create log directory
+  file:
+    path: /var/log/app
+    state: directory
+    mode: '0755'
+
+- name: Configure log rotation
+  copy:
+    content: |
+      /var/log/app/*.log {
+          daily
+          rotate 7
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0640 appuser appuser
+          sharedscripts
+      }
+    dest: /etc/logrotate.d/app-logs
+
+- name: Allow monitoring ports through firewall
+  ufw:
+    rule: allow
+    port: '9100'
+    proto: tcp
+
+- name: Install system monitoring script
+  copy:
+    content: |
+      #!/bin/bash
+      # Simple system monitoring script
+      echo "=== System Load ==="
+      uptime
+      echo ""
+      echo "=== Memory Usage ==="
+      free -h
+      echo ""
+      echo "=== Disk Usage ==="
+      df -h /
+    dest: /usr/local/bin/system-monitor.sh
+    mode: '0755'
+
+- name: Display monitoring configuration summary
+  debug:
+    msg: "Monitoring configured for {{ inventory_hostname }}"

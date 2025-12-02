@@ -1,0 +1,51 @@
+---
+# Setup Load Balancer
+# Configure HAProxy/Nginx load balancer
+
+- name: Configure load balancer
+  hosts: loadbalancers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+
+  tasks:
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+
+    - name: Enable HAProxy
+      systemd:
+        name: haproxy
+        state: started
+        enabled: yes
+
+    - name: Configure HAProxy
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        backup: yes
+      notify: Restart HAProxy
+
+  handlers:
+    - name: Restart HAProxy
+      systemd:
+        name: haproxy
+        state: restarted
+
+  post_tasks:
+    - name: Verify load balancer is running
+      systemd:
+        name: haproxy
+        state: started
+
+    - name: Test load balancer connectivity
+      uri:
+        url: "http://localhost:{{ lb_port }}"
+        status_code: 200,503
+      register: lb_result
+      until: lb_result.status in [200, 503]
+      retries: 3
+      delay: 5

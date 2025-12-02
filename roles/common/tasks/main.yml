@@ -1,0 +1,77 @@
+---
+# Common role - Tasks for all servers
+
+- name: Update system packages
+  apt:
+    update_cache: yes
+    upgrade: safe
+  when: ansible_os_family == "Debian"
+
+- name: Install basic packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - htop
+      - vim
+      - net-tools
+      - ntp
+      - python3-pip
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Set timezone
+  timezone:
+    name: UTC
+
+- name: Configure firewall - UFW
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Allow SSH access
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: Create app user
+  user:
+    name: "{{ app_user }}"
+    shell: /bin/bash
+    home: "/home/{{ app_user }}"
+    createhome: yes
+    state: present
+
+- name: Configure sudo for app user
+  lineinfile:
+    path: /etc/sudoers
+    line: "{{ app_user }} ALL=(ALL) NOPASSWD: ALL"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Create SSH directory for app user
+  file:
+    path: "/home/{{ app_user }}/.ssh"
+    state: directory
+    mode: '0700'
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+
+- name: Configure NTP synchronization
+  systemd:
+    name: ntp
+    state: started
+    enabled: yes
+
+- name: Install monitoring dependencies
+  apt:
+    name:
+      - sysstat
+      - iotop
+    state: present
+
+- name: Display common configuration summary
+  debug:
+    msg: "Common configuration completed for {{ inventory_hostname }}"

@@ -1,0 +1,12 @@
+---
+# Common role - Handlers
+
+- name: Restart firewall
+  systemd:
+    name: ufw
+    state: restarted
+
+- name: Restart NTP
+  systemd:
+    name: ntp
+    state: restarted
